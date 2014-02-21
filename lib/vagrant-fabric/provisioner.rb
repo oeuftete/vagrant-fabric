@@ -6,15 +6,18 @@ module VagrantPlugins
         user = ssh_info[:username]
         host = ssh_info[:host]
         port = ssh_info[:port]
-        if ssh_info[:private_key_path].kind_of?(Array)
-          private_key = ssh_info[:private_key_path][0]
-        else
-          private_key = ssh_info[:private_key_path]
+        private_key = ssh_info[:private_key_path]
+
+        #  After https://github.com/mitchellh/vagrant/pull/907 (Vagrant 1.4.0+),
+        #  private_key_path is an array.
+        if ! private_key.kind_of?(Array)
+          private_key = [private_key]
         end
+        private_key_option = private_key.map { |k| '-i ' + k }.join(' ')
 
         if config.remote == false
           system "#{config.fabric_path} -f #{config.fabfile_path} " +
-                "-i #{private_key} --user=#{user} --hosts=#{host} " +
+                "#{private_key_option} --user=#{user} --hosts=#{host} " +
                 "--port=#{port} #{config.tasks.join(' ')}"
         else
           if config.install
